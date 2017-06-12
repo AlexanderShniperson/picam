@@ -50,16 +50,23 @@ final class EncoderBufferCallback implements MMAL_PORT_BH_CB_T {
     }
 
     @Override
-    public void apply(MMAL_PORT_T port, MMAL_BUFFER_HEADER_T buffer) {
-        logger.debug("apply()");
+    public void callback(MMAL_PORT_T port, MMAL_BUFFER_HEADER_T buffer) {
+        logger.debug("[callback] callback()");
 
-        logger.trace("port={}", port);
-        logger.trace("buffer={}", buffer);
+        logger.trace("[callback] port={}", port);
+        logger.trace("[callback] buffer={}", buffer);
+
+        int flags = buffer.flags;
+        logger.debug("[callback] flags={}", flags);
 
         boolean finished = false;
 
+        if ((flags & (MMAL_BUFFER_HEADER_FLAG_FRAME_END | MMAL_BUFFER_HEADER_FLAG_TRANSMISSION_FAILED)) != 0) {
+            finished = true;
+        }
+
         int bufferLength = buffer.length;
-        logger.debug("bufferLength={}", bufferLength);
+        logger.debug("[callback] bufferLength={}", bufferLength);
 
         if (bufferLength > 0) {
             mmal.mmal_buffer_header_mem_lock(buffer); // FIXME check return?
@@ -72,16 +79,7 @@ final class EncoderBufferCallback implements MMAL_PORT_BH_CB_T {
                 logger.error("Error in callback handling picture data", e);
                 finished = true;
             }
-            finally {
-                mmal.mmal_buffer_header_mem_unlock(buffer);
-            }
-        }
-
-        int flags = buffer.flags;
-        logger.debug("flags={}", flags);
-
-        if ((buffer.flags & (MMAL_BUFFER_HEADER_FLAG_FRAME_END | MMAL_BUFFER_HEADER_FLAG_TRANSMISSION_FAILED)) != 0) {
-            finished = true;
+            mmal.mmal_buffer_header_mem_unlock(buffer);
         }
 
         mmal.mmal_buffer_header_release(buffer);
@@ -90,26 +88,27 @@ final class EncoderBufferCallback implements MMAL_PORT_BH_CB_T {
             sendNextPictureBuffer(port);
         }
 
-        logger.debug("finished={}", finished);
+        logger.debug("[callback] finished={}", finished);
+        logger.debug("[callback] enabled={}", port.isEnabled());
 
         if (finished) {
-            logger.debug("signal capture complete");
+            logger.debug("[callback] signal capture complete");
             captureFinishedLatch.countDown();
         }
     }
 
     private void sendNextPictureBuffer(MMAL_PORT_T port) {
-        logger.debug("sendNextPictureBuffer()");
+        logger.debug("[sendNextPictureBuffer] sendNextPictureBuffer()");
 
         MMAL_BUFFER_HEADER_T nextBuffer = mmal.mmal_queue_get(picturePool.queue);
-        logger.trace("nextBuffer={}", nextBuffer);
+        logger.trace("[sendNextPictureBuffer] nextBuffer={}", nextBuffer);
 
         if (nextBuffer == null) {
             throw new RuntimeException("Failed to get next buffer from picture pool");
         }
 
         int result = mmal.mmal_port_send_buffer(port, nextBuffer);
-        logger.debug("result={}", result);
+        logger.debug("[sendNextPictureBuffer] result={}", result);
 
         if (result != MMAL_SUCCESS) {
             throw new RuntimeException("Failed to send next picture buffer to encoder");

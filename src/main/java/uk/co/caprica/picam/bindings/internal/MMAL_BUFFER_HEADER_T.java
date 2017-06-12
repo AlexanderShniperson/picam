@@ -29,10 +29,10 @@ import java.util.List;
 public class MMAL_BUFFER_HEADER_T extends Structure {
 
 	public static class ByReference extends MMAL_BUFFER_HEADER_T implements Structure.ByReference {
-	};
+	}
 
 	public static class ByValue extends MMAL_BUFFER_HEADER_T implements Structure.ByValue {
-	};
+	}
 
 	private static final List<String> FIELD_ORDER = Collections.unmodifiableList(Arrays.asList(
 		"next",

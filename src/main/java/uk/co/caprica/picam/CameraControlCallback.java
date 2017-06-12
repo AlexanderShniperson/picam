@@ -35,7 +35,7 @@ final class CameraControlCallback implements MMAL_PORT_BH_CB_T {
     }
 
     @Override
-    public void apply(MMAL_PORT_T port, MMAL_BUFFER_HEADER_T buffer) {
+    public void callback(MMAL_PORT_T port, MMAL_BUFFER_HEADER_T buffer) {
         logger.debug("apply()");
 
         logger.trace("port={}", port);

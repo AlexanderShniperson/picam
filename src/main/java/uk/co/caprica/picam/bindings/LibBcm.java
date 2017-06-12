@@ -41,4 +41,6 @@ public interface LibBcm extends Library {
     NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(LIBRARY_NAME);
 
     void bcm_host_init();
+
+    void bcm_host_deinit();
 }

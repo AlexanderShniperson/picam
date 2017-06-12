@@ -23,5 +23,5 @@ import com.sun.jna.Callback;
 
 public interface MMAL_PORT_BH_CB_T extends Callback {
 
-    void apply(MMAL_PORT_T port, MMAL_BUFFER_HEADER_T buffer);
+    void callback(MMAL_PORT_T port, MMAL_BUFFER_HEADER_T buffer);
 };
