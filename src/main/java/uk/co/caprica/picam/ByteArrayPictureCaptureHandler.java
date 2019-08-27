@@ -14,25 +14,47 @@
  * You should have received a copy of the GNU General Public License
  * along with picam.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright 2016 Caprica Software Limited.
+ * Copyright 2016-2019 Caprica Software Limited.
  */
 
 package uk.co.caprica.picam;
 
 import java.io.ByteArrayOutputStream;
 
-public class ByteArrayPictureCaptureHandler implements PictureCaptureHandler<ByteArrayOutputStream> {
+/**
+ * Implementation of a picture capture handler that stores the image data in a byte array.
+ */
+public class ByteArrayPictureCaptureHandler implements PictureCaptureHandler<byte[]> {
+
+    private final Integer initialSize;
 
     private ByteArrayOutputStream out;
 
-    @Override
-    public void begin() throws Exception {
-        out = new ByteArrayOutputStream();
+    /**
+     * Create a picture capture handler.
+     */
+    public ByteArrayPictureCaptureHandler() {
+        this.initialSize = null;
+    }
+
+    /**
+     * Create a picture capture handler.
+     *
+     * @param initialSize initial size of the byte buffer, it will be automatically extended as needed
+     */
+    public ByteArrayPictureCaptureHandler(int initialSize) {
+        this.initialSize = initialSize;
     }
 
     @Override
-    public void pictureData(byte[] data) throws Exception {
+    public void begin() throws Exception {
+        out = initialSize != null ? new ByteArrayOutputStream(initialSize) : new ByteArrayOutputStream();
+    }
+
+    @Override
+    public int pictureData(byte[] data) throws Exception {
         out.write(data);
+        return data.length;
     }
 
     @Override
@@ -40,7 +62,8 @@ public class ByteArrayPictureCaptureHandler implements PictureCaptureHandler<Byt
     }
 
     @Override
-    public ByteArrayOutputStream result() {
-        return out;
+    public byte[] result() {
+        return out.toByteArray();
     }
+
 }

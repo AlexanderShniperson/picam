@@ -17,31 +17,18 @@
  * Copyright 2016-2019 Caprica Software Limited.
  */
 
-package uk.co.caprica.picam.enums;
+package uk.co.caprica.picam.tutorial.installation;
 
-public enum Encoding {
+import uk.co.caprica.picam.NativeLibraryException;
 
-    BMP("BMP "),
-    GIF("GIF "),
-    I420("I420"),
-    JPEG("JPEG"),
-    PNG("PNG "),
-    RGB24("RGB3"),
-    BGR24("BGR3"),
+import static uk.co.caprica.picam.PicamNativeLibrary.installTempLibrary;
 
-    OPAQUE("OPQV");
+public class MyCameraApplication1 {
 
-    private final int value;
+    public static void main(String[] args) throws NativeLibraryException {
+        installTempLibrary();
 
-    Encoding(String encoding) {
-        this.value = fourCC(encoding);
+        // ... your application code ...
     }
 
-    public int value() {
-        return value;
-    }
-
-    private static int fourCC(String value) {
-        return value.charAt(0) | (value.charAt(1) << 8) | (value.charAt(2) << 16) | (value.charAt(3) << 24);
-    }
 }

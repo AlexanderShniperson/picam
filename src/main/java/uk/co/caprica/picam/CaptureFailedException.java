@@ -17,31 +17,26 @@
  * Copyright 2016-2019 Caprica Software Limited.
  */
 
-package uk.co.caprica.picam.enums;
+package uk.co.caprica.picam;
 
-public enum Encoding {
+/**
+ * Exception thrown if a capture was requested but failed for some reason.
+ */
+public final class CaptureFailedException extends Exception {
 
-    BMP("BMP "),
-    GIF("GIF "),
-    I420("I420"),
-    JPEG("JPEG"),
-    PNG("PNG "),
-    RGB24("RGB3"),
-    BGR24("BGR3"),
-
-    OPAQUE("OPQV");
-
-    private final int value;
-
-    Encoding(String encoding) {
-        this.value = fourCC(encoding);
+    public CaptureFailedException() {
     }
 
-    public int value() {
-        return value;
+    public CaptureFailedException(Throwable cause) {
+        super(cause);
     }
 
-    private static int fourCC(String value) {
-        return value.charAt(0) | (value.charAt(1) << 8) | (value.charAt(2) << 16) | (value.charAt(3) << 24);
+    public CaptureFailedException(String message) {
+        super(message);
     }
+
+    public CaptureFailedException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

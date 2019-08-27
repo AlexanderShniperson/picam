@@ -14,16 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with picam.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright 2016 Caprica Software Limited.
+ * Copyright 2016-2019 Caprica Software Limited.
  */
 
 package uk.co.caprica.picam;
 
-import uk.co.caprica.picam.enums.Encoding;
-import uk.co.caprica.picam.enums.ExposureMode;
 import uk.co.caprica.picam.enums.AutomaticWhiteBalanceMode;
 import uk.co.caprica.picam.enums.DynamicRangeCompressionStrength;
+import uk.co.caprica.picam.enums.Encoding;
 import uk.co.caprica.picam.enums.ExposureMeteringMode;
+import uk.co.caprica.picam.enums.ExposureMode;
 import uk.co.caprica.picam.enums.ImageEffect;
 import uk.co.caprica.picam.enums.Mirror;
 import uk.co.caprica.picam.enums.StereoscopicMode;
@@ -32,15 +32,20 @@ import java.awt.geom.Rectangle2D;
 
 import static uk.co.caprica.picam.enums.Encoding.PNG;
 
-// FIXME encoding quality?
-
+/**
+ * Camera configuration.
+ * <p>
+ * This can be used in like a "builder".
+ */
 public final class CameraConfiguration {
 
     private static final Integer DEFAULT_WIDTH = 2592;
 
     private static final Integer DEFAULT_HEIGHT = 1944;
 
-    private static final Integer DEFAULT_DELAY = 5000;
+    private Integer cameraNumber = 0;
+
+    private Integer customSensorConfig = 0;
 
     private Integer width = DEFAULT_WIDTH;
 
@@ -48,7 +53,13 @@ public final class CameraConfiguration {
 
     private Encoding encoding = PNG;
 
-    private StereoscopicMode stereoscopicMode;
+    private Integer quality;
+
+    private StereoscopicMode stereoscopicMode = StereoscopicMode.NONE;
+
+    private Boolean decimate = Boolean.FALSE;
+
+    private Boolean swapEyes = Boolean.FALSE;
 
     private Integer brightness;
 
@@ -74,9 +85,9 @@ public final class CameraConfiguration {
 
     private AutomaticWhiteBalanceMode automaticWhiteBalanceMode;
 
-    private float automaticWhiteBalanceRedGain;
+    private Float automaticWhiteBalanceRedGain;
 
-    private float automaticWhiteBalanceBlueGain;
+    private Float automaticWhiteBalanceBlueGain;
 
     private ImageEffect imageEffect;
 
@@ -84,12 +95,21 @@ public final class CameraConfiguration {
 
     private Integer rotation;
 
-    private Rectangle2D.Float crop = new Rectangle2D.Float(0.f, 0.f, 1.f, 1.f);
+    private Double cropX;
 
-    private Integer delay = DEFAULT_DELAY;
+    private Double cropY;
 
-//    private Integer imageEffectsParameters;
-//    private Integer colourEffects;
+    private Double cropW;
+
+    private Double cropH;
+
+    private Boolean colourEffect;
+
+    private Integer u;
+
+    private Integer v;
+
+    private Integer captureTimeout = 0;
 
     private CameraConfiguration() {
     }
@@ -119,8 +139,18 @@ public final class CameraConfiguration {
         return this;
     }
 
-    public CameraConfiguration stereoscopicMode(StereoscopicMode stereoscopicMode) {
+    public CameraConfiguration quality(Integer quality) {
+        if (quality < 0 || quality > 100) {
+            throw new IllegalArgumentException("Quality must be in the range 0 to 100");
+        }
+        this.quality = quality;
+        return this;
+    }
+
+    public CameraConfiguration stereoscopicMode(StereoscopicMode stereoscopicMode, Boolean decimate, Boolean swapEyes) {
         this.stereoscopicMode = stereoscopicMode;
+        this.decimate = decimate;
+        this.swapEyes = swapEyes;
         return this;
     }
 
@@ -156,9 +186,13 @@ public final class CameraConfiguration {
         return this;
     }
 
-    // FIXME naming conflict videoStabilisation? can i do anything better rather than get/set/is ?
-    public CameraConfiguration stabiliseVideo() {
+    public CameraConfiguration vdieoStabilsation() {
         this.videoStabilisation = true;
+        return this;
+    }
+
+    public CameraConfiguration vdieoStabilsation(Boolean videoStabilisation) {
+        this.videoStabilisation = videoStabilisation;
         return this;
     }
 
@@ -183,8 +217,8 @@ public final class CameraConfiguration {
     }
 
     public CameraConfiguration exposureCompensation(Integer exposureCompensation) {
-        if (exposureCompensation < -10 || exposureCompensation > 10){
-            throw new IllegalArgumentException("Exposure Compensation must be in the range -1 to 10");
+        if (exposureCompensation < -10 || exposureCompensation > 10) {
+            throw new IllegalArgumentException("Exposure Compensation must be in the range -10 to 10");
         }
         this.exposureCompensation = exposureCompensation;
         return this;
@@ -210,7 +244,7 @@ public final class CameraConfiguration {
         return this;
     }
 
-    public CameraConfiguration automaticWhiteBalanceGain(float automaticWhiteBalanceRedGain, float automaticWhiteBalanceBlueGain) {
+    public CameraConfiguration automaticWhiteBalanceGains(float automaticWhiteBalanceRedGain, float automaticWhiteBalanceBlueGain) {
         this.automaticWhiteBalanceRedGain = automaticWhiteBalanceRedGain;
         this.automaticWhiteBalanceBlueGain = automaticWhiteBalanceBlueGain;
         return this;
@@ -218,6 +252,13 @@ public final class CameraConfiguration {
 
     public CameraConfiguration imageEffect(ImageEffect imageEffect) {
         this.imageEffect = imageEffect;
+        return this;
+    }
+
+    public CameraConfiguration colourEffect(Boolean enable, Integer u, Integer v) {
+        this.colourEffect = enable;
+        this.u = u;
+        this.v = v;
         return this;
     }
 
@@ -231,18 +272,35 @@ public final class CameraConfiguration {
         return this;
     }
 
-    public CameraConfiguration crop(float x, float y, float width, float height) {
-        this.crop.setRect(x, y, width, height);
+    public CameraConfiguration crop(double x, double y, double width, double height) {
+        this.cropX = x;
+        this.cropY = y;
+        this.cropW = width;
+        this.cropH = height;
         return this;
     }
 
-    public CameraConfiguration delay(Integer delay) {
-        this.delay = delay;
+    public CameraConfiguration captureTimeout(Integer captureTimeout) {
+        this.captureTimeout = captureTimeout;
         return this;
     }
 
-    public Camera camera() {
+    /**
+     * Create a new camera based on the configuration.
+     *
+     * @return
+     * @throws CameraException if the camera failed to open
+     */
+    public Camera camera() throws CameraException {
         return new Camera(this);
+    }
+
+    public Integer cameraNumber() {
+        return cameraNumber;
+    }
+
+    public Integer customSensorConfig() {
+        return customSensorConfig;
     }
 
     public Integer width() {
@@ -255,6 +313,22 @@ public final class CameraConfiguration {
 
     public Encoding encoding() {
         return encoding;
+    }
+
+    public Integer quality() {
+        return quality;
+    }
+
+    public StereoscopicMode stereoscopicMode() {
+        return stereoscopicMode;
+    }
+
+    public Boolean decimate() {
+        return decimate;
+    }
+
+    public Boolean swapEyes() {
+        return swapEyes;
     }
 
     public Integer brightness() {
@@ -305,8 +379,28 @@ public final class CameraConfiguration {
         return automaticWhiteBalanceMode;
     }
 
+    public Float automaticWhiteBalanceRedGain() {
+        return automaticWhiteBalanceRedGain;
+    }
+
+    public Float automaticWhiteBalanceBlueGain() {
+        return automaticWhiteBalanceBlueGain;
+    }
+
     public ImageEffect imageEffect() {
         return imageEffect;
+    }
+
+    public Boolean colourEffect() {
+        return colourEffect;
+    }
+
+    public Integer u() {
+        return u;
+    }
+
+    public Integer v() {
+        return v;
     }
 
     public Mirror mirror() {
@@ -317,11 +411,24 @@ public final class CameraConfiguration {
         return rotation;
     }
 
-    public Rectangle2D.Float crop() {
-        return crop;
+    public Double cropX() {
+        return cropX;
     }
 
-    public Integer delay() {
-        return delay;
+    public Double cropY() {
+        return cropY;
     }
+
+    public Double cropW() {
+        return cropW;
+    }
+
+    public Double cropH() {
+        return cropH;
+    }
+
+    public Integer captureTimeout() {
+        return captureTimeout;
+    }
+
 }

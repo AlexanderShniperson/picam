@@ -17,31 +17,14 @@
  * Copyright 2016-2019 Caprica Software Limited.
  */
 
-package uk.co.caprica.picam.enums;
+package uk.co.caprica.picam.tutorial.installation;
 
-public enum Encoding {
+public class MyCameraApplication2 {
 
-    BMP("BMP "),
-    GIF("GIF "),
-    I420("I420"),
-    JPEG("JPEG"),
-    PNG("PNG "),
-    RGB24("RGB3"),
-    BGR24("BGR3"),
+    public static void main(String[] args) {
+        System.load("/your/installation-directory/picam-${picamVersion}.so");
 
-    OPAQUE("OPQV");
-
-    private final int value;
-
-    Encoding(String encoding) {
-        this.value = fourCC(encoding);
+        // ... your application code ...
     }
 
-    public int value() {
-        return value;
-    }
-
-    private static int fourCC(String value) {
-        return value.charAt(0) | (value.charAt(1) << 8) | (value.charAt(2) << 16) | (value.charAt(3) << 24);
-    }
 }

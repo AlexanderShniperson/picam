@@ -17,18 +17,27 @@
  * Copyright 2016-2019 Caprica Software Limited.
  */
 
-package uk.co.caprica.picam;
+package uk.co.caprica.picam.tutorial.configuration;
 
-import org.junit.Test;
+import uk.co.caprica.picam.CameraConfiguration;
+import uk.co.caprica.picam.NativeLibraryException;
+import uk.co.caprica.picam.enums.AutomaticWhiteBalanceMode;
 import uk.co.caprica.picam.enums.Encoding;
 
-import static org.junit.Assert.assertEquals;
+import static uk.co.caprica.picam.CameraConfiguration.cameraConfiguration;
+import static uk.co.caprica.picam.PicamNativeLibrary.installTempLibrary;
 
-public class FourCCTest {
+public class MyCameraApplication3 {
 
-    @Test
-    public void testEncoding() {
-        assertEquals(1195724874, Encoding.JPEG.value());
-        assertEquals(541544016, Encoding.PNG.value());
+    public static void main(String[] args) throws NativeLibraryException {
+        installTempLibrary();
+
+        CameraConfiguration config = cameraConfiguration()
+            .width(1920)
+            .height(1080)
+            .automaticWhiteBalance(AutomaticWhiteBalanceMode.AUTO)
+            .encoding(Encoding.JPEG)
+            .quality(85);
     }
+
 }

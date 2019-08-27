@@ -14,18 +14,45 @@
  * You should have received a copy of the GNU General Public License
  * along with picam.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright 2016 Caprica Software Limited.
+ * Copyright 2016-2019 Caprica Software Limited.
  */
 
 package uk.co.caprica.picam;
 
+/**
+ * Specification for a component that accepts and processes picture capture data.
+ *
+ * @param <T> type of result produced by the picture capture handler
+ */
 public interface PictureCaptureHandler<T> {
 
+    /**
+     * Begin a new capture.
+     * <p>
+     * This is used, for example, to open a new output stream.
+     *
+     * @throws Exception if a general error occurs
+     */
     void begin() throws Exception;
 
-    void pictureData(byte[] data) throws Exception;
+    /**
+     * Process picture capture data.
+     *
+     * @param data picture data
+     * @return number of bytes processed, if this does not equal the size of the supplied data the capture will be aborted in error
+     * @throws Exception if a general error occurs
+     */
+    int pictureData(byte[] data) throws Exception;
 
+    /**
+     * End a capture.
+     * <p>
+     * This is used, for example, to close a previously opened new output stream.
+     *
+     * @throws Exception if a general error occurs
+     */
     void end() throws Exception;
 
     T result();
+
 }

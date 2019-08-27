@@ -14,52 +14,52 @@
  * You should have received a copy of the GNU General Public License
  * along with picam.  If not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright 2016 Caprica Software Limited.
+ * Copyright 2016-2019 Caprica Software Limited.
  */
 
 package uk.co.caprica.picam;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import uk.co.caprica.picam.enums.ImageEffect;
-
-import java.io.File;
+import uk.co.caprica.picam.enums.Encoding;
 
 import static uk.co.caprica.picam.CameraConfiguration.cameraConfiguration;
-import static uk.co.caprica.picam.bindings.LibBcm.bcm;
+import static uk.co.caprica.picam.app.Environment.dumpEnvironment;
 
-// FIXME only problem seems to be error/warning messages on destroy
-//       not sure if this is expected or not, it does NOT appear with Raspistill, but I think maybe it routes logging somewhere
-//       check clean-up is robust and not duplicated (do I need explicit disconnect ports?)
-//       maybe some race? i've seen port_enabled = true twice in a row
-
-// FIXME check all JNA reads/writes are actually necessary
-
-// FIXME occasionally it does appear to hang during capture, it seems the native library never sends the last frame in these cases
-
-// FIXME extend ParameterStructure - why is the type not set? e.g. for int32, rational? does it matter?
-
+/**
+ * A simple test to capture one or more images from the camera and save them to disk.
+ *
+ * 3280 x 2464
+ * 2592 x 1944
+ * 1640 x 1212
+ *  820 x  616
+ *  648 x  486
+ */
 public class BasicTest {
 
-    private final Logger logger = LoggerFactory.getLogger(BasicTest.class);
-
     public static void main(String[] args) throws Exception {
+        dumpEnvironment();
+
+        System.out.println("Installed native library to " + PicamNativeLibrary.installTempLibrary());
+
         new BasicTest(args);
     }
 
     private BasicTest(String[] args) throws Exception {
-        logger.info("Test()");
-
-        bcm.bcm_host_init(); // FIXME seems not needed?
+        if (args.length !=3) {
+            System.err.println("Usage: <width> <height> <count>");
+            System.exit(1);
+        }
 
         int width = Integer.parseInt(args[0]);
         int height = Integer.parseInt(args[1]);
 
-        String filename = args[2];
+        int max = Integer.parseInt(args[2]);
 
         CameraConfiguration config = cameraConfiguration()
             .width(width)
             .height(height)
+            .encoding(Encoding.JPEG)
+            .quality(85)
+            .captureTimeout(10000)
 //            .brightness(50)
 //            .contrast(-30)
 //            .saturation(80)
@@ -72,19 +72,22 @@ public class BasicTest {
 //            .exposureCompensation(5)
 //            .dynamicRangeCompressionStrength(DynamicRangeCompressionStrength.MAX)
 //            .automaticWhiteBalance(AutomaticWhiteBalanceMode.FLUORESCENT)
-            .imageEffect(ImageEffect.SKETCH)
+//            .imageEffect(ImageEffect.SKETCH)
 //            .flipHorizontally()
 //            .flipVertically()
 //            .rotation(rotation)
 //              .crop(0.25f, 0.25f, 0.5f, 0.5f);
-        ;
+                ;
+
+        PictureCaptureHandler pictureCaptureHandler = new SequentialFilePictureCaptureHandler("image-%04d.jpg");
 
         try (Camera camera = new Camera(config)) {
-            logger.info("created camera " + camera);
-
-            camera.takePicture(new FilePictureCaptureHandler(new File(filename)));
+            for (int i = 0; i < max; i++) {
+                System.out.println("Begin " + i);
+                camera.takePicture(pictureCaptureHandler);
+                System.out.println("  End " + i);
+            }
         }
-
-        logger.info("finished");
     }
+
 }

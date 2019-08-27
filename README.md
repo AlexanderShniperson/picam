@@ -1,118 +1,186 @@
+*You are currently looking at the development branch for picam-2.0.0, if you are looking for the previous version of
+picam you should switch to the [picam-1.x branch](https://github.com/caprica/picam/tree/picam-1.x).*
+
+**At the moment this master branch for 2.0.0 is somewhat experimental in that it uses JNI rather than JNA to access the
+camera and there is a little bit more involved in getting up and running.**
+
+*If you want to play it safe, use the [picam-1.x branch](https://github.com/caprica/picam/tree/picam-1.x) instead, if
+you want to experiment, test, or help improve the JNI solution then by all means this master branch is for you!*
+
 picam
 =====
 
 An easy-to-use Open Source Java library to access the [Raspberry Pi](https://www.raspberrypi.org/)
 [camera module](https://www.raspberrypi.org/products/camera-module).
 
-This library provides a direct Java API to the camera - behind the scenes the *native* MMAL
-library is used.
+This library provides a direct Java API to the camera - behind the scenes the *native* MMAL library is used.
 
-This library does *not* require any external native processes nor does it wrap
-any native executable program.
+This library does *not* require any external native processes nor does it wrap any native executable program.
 
-The implementation is based loosely on that used by the native `RaspiStill`
-utility.
+The implementation is based loosely on that used by the native `RaspiStill` utility.
 
-This project is unofficial and is not affiliated in any way with the Raspberry
-Pi Foundation.
+This project is unofficial and is not affiliated in any way with the Raspberry Pi Foundation.
+
+News
+----
+
+Picam 2.0.0 brings a pure JNI implementation rather than using JNA, this should give a modest but notable performance
+boost compared to the JNA implementation in picam-1.x.
+
+Version 2.0.0+ of picam brings some small API changes, you may have to make some minor adjustments to your code if you
+decide to move to the new version.
+
+Release are available at [Maven Cental](https://search.maven.org/search?q=a:picam).
+
+Installation
+------------
+
+Add the following Maven dependency to your project:
+
+    <dependencies>
+        <dependency>
+            <groupId>uk.co.caprica</groupId>
+            <artifactId>picam</artifactId>
+            <version>2.0.2</version>
+        </dependency>
+    </dependencies>
+
+No other dependencies are necessary.
+
+Since version 2+ of picam, JNI is used directly via the [picam native library](https://github.com/caprica/picam-native)
+project.
+ 
+You can build this library yourself, or use the pre-built shared library that is bundled in the picam jar file. 
+
+Testing the Installation
+------------------------
+
+A very basic capture application is provided with the picam jar file. You can test that everything works like this:
+
+```
+java -jar picam-2.0.0.jar 1280 800 test.jpg
+```
+
+The command-line parameters are width, height and filename respectively.
 
 Basic Usage
 -----------
 
-More detailed installation and usage instructions will be provided soon.
+The first thing to do is to install the picam JNI native library, you can set this up manually if you want, but the
+simplest way is to have picam do it for you:
 
-Add the library jar file and its dependencies to your project class-path:
+```
+import static uk.co.caprica.picam.PicamNativeLibrary.installTempLibrary;
 
- * picam-<version>-SNAPSHOT.jar
- * jna-4.2.1.jar
- * logback-classic-1.1.7.jar
- * logback-core-1.1.7.jar
- * slf4j-api-1.7.20.jar
+public class PicamTest {
 
-Using the library is simple, essentially:
+    public static void main(String[] args) {
+        // Extract the bundled picam native library to a temporary file and load it
+        installTempLibrary();
+        
+        // ... your application code ...
+    }
+
+}
+```
+
+Using the library itself is simple, first you create a `CameraConfiguration` using a convenient "builder" approach:
 
 ```
 CameraConfiguration config = cameraConfiguration()
     .width(1920)
-    .height(1080);
+    .height(1080)
+    .encoding(Encoding.JPEG)
+    .quality(85);
+```
+You can supply as much or as little configuration as you want, sensible defaults will be provided where needed.
 
+Next, create a `Camera` with that configuration:
+```
 try (Camera camera = new Camera(config)) {
-    camera.takePicture(new FilePictureCaptureHandler(new File("picam.png")));
+    camera.takePicture(new FilePictureCaptureHandler(new File("picam1.jpg")));
+    camera.takePicture(new FilePictureCaptureHandler(new File("picam2.jpg")));
+}
+catch (CameraException e) {
+    e.printStackTrace();
 }
 ```
+Captured images can be directly saved to disk, or returned and processed as a `byte[]`.
 
-Captured images can be directly saved to disk, or returned and processed as a
-`byte[]`.
+The above example used a `FilePictureCaptureHandler` that saves the captured picture directly to disk. You are free to
+provide your own implementations of a `PictureCaptureHandler` to suit your own needs.
+
+That example also created a camera, took only a single picture and automatically cleaned up the camera since `Camera`
+implements `AutoCloseable`. There is no reason why you couldn't keep a camera component and take multiple pictures
+before finally closing the camera yourself. It is important that whichever approach you use you close the camera when
+you are finished using it to free up the camera and associated resources.
+
+If the colouration of your captured pictures looks a bit "off", try setting a `delay` value when you take the picture.
+The delay value is used to give the camera sensor time to "settle" before capturing the image. Even a delay as small as
+5ms can make a significant difference. A longer delay for the first capture is sometimes needed.
+
+You can specify the delay like this:
+
+```
+try (Camera camera = new Camera(config)) {
+    camera.takePicture(new FilePictureCaptureHandler(new File("picam-1.jpg")), 3000);
+    camera.takePicture(new FilePictureCaptureHandler(new File("picam-2.jpg")));
+}
+catch (CameraException e) {
+    e.printStackTrace();
+}
+```
+This example code fragment shows waiting 3 seconds (3,000 milliseconds) for the first picture, then no delay for the
+second picture.
+
+The `Camera` instance is obviously *not thread-safe*. You must not attempt to use the camera from multiple threads at
+the same time.
+
+Javadoc
+-------
+
+* [2.0.1 (current)](http://caprica.github.io/picam/javadoc/2.0.1 "2.0.1 Javadoc")
+* [2.0.0](http://caprica.github.io/picam/javadoc/2.0.0 "2.0.0 Javadoc")
+
+Tutorials
+---------
+
+Some new tutorials are available [here](http://capricasoftware.co.uk/projects/picam-2/tutorials).
 
 Status
 ------
 
-The project status is currently pre-alpha and experimental.
+The current API is stable but nevertheless is still subject to change.
 
-The API is subject to change.
+Hundres of thousands of images have been captured, but you might like to have a look at [this issue](https://github.com/caprica/picam/issues/9).
 
 Feedback is welcome at the [github project](https://github.com/caprica/picam).
 
-Not all camera features or effects are implemented, the aim is to add more
-support over time:
+Most major/useful camera features or effects are implemented:
 
 - [x] image width/height
-- [ ] image encoding (hard-coded to PNG currently)
-- [ ] stereo mode
+- [x] image encoding
+- [x] encoding quality (for JPEG encoding)
+- [x] stereo mode
 - [x] brightness
 - [x] contrast
 - [x] saturation
 - [x] sharpness
 - [x] video stabilisation
-- [ ] shutter speed
+- [x] shutter speed
 - [x] ISO
 - [x] exposure mode
 - [x] exposure metering mode
 - [x] exposure compensation
 - [x] dynamic range compression strength
 - [x] automatic white balance modes
-- [ ] automatic white balance red/blue gain
-- [-] image effects (most, but not all, are working)
-- [ ] image effect parameters
-- [ ] colour effects
+- [x] automatic white balance red/blue gain
+- [x] image effects
+- [x] colour effects
 - [x] flip horizontally/vertically
 - [x] rotation (90 degree steps)
-- [ ] crop (region of interest)
-- [ ] burst capture mode
-- [ ] EXIF tags
+- [x] crop (region of interest)
 - [x] initial capture delay (time for the sensor to 'settle')
-- [ ] raw capture
-
-Known Issues
-------------
-
-Important!
-
-The native image encoder sometimes fails to send the final frame of image data.
-I have no idea why this intermittently fails, it seems to happen roughly 10%
-of the time. At the present time this will cause a hang in the encoder buffer
-callback function, requiring SIGKILL to terminate the Java application.
-
-Warning messages are logged when the native camera resources are freed up, e.g.
-destroying the connection between the camera and the encoder causes a warning
-to be logged stating that a port can not be disabled (because it is already
-disabled).
-
-Sometimes further warning messages are logged to the native console during
-cleanup of the native resources, e.g. attempting to disable a port reports
-success but the port is still enabled - it looks like a race condition in
-native code.
-
-Installation
-------------
-
-At the present time you need to clone this github repository and use Maven to
-build your own distribution.
-
-Follow the normal github instructions to clone the repository then simply type
-`mvn install` to build a distribution package. You can than transfer that
-package archive to the Pi, uncompress it and start using the camera from your
-Java applications.
 
 Trademark Acknowledgement
 -------------------------
@@ -122,6 +190,6 @@ Raspberry Pi is a trademark of the Raspberry Pi Foundation.
 Demo Application
 ----------------
 
-This screen-shot shows a Java web application running on the Pi:
+This screenshot shows a Java web application running on the Pi:
 
 ![picam-demo](https://github.com/caprica/picam/raw/master/etc/demo.png "picam-demo")

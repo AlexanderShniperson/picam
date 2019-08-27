@@ -22,47 +22,50 @@ package uk.co.caprica.picam;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.nio.file.Path;
 
 /**
- * Implementation of a picture capture handler that stores the image data in a local file.
+ * A simple picture capture handler implementation that saves images to disk with sequentially
+ * numbered filenames.
  */
-public class FilePictureCaptureHandler implements PictureCaptureHandler<File> {
+public class SequentialFilePictureCaptureHandler implements PictureCaptureHandler<File> {
 
-    private final File file;
+    // Buffer size, somewhat arbitrary (default is 32k)
+    private static final int BUFFER_SIZE = 1024 * 32;
+
+    private final String pattern;
+
+    private int number;
+
+    private File file;
 
     private BufferedOutputStream out;
 
     /**
      * Create a picture capture handler.
+     * <p>
+     * File numbering will start from one.
      *
-     * @param file file to save the picture to
+     * @param pattern format pattern for the filenames, containing a "%d" formatter somewhere to take the file number
      */
-    public FilePictureCaptureHandler(Path file) {
-        this.file = file.toFile();
+    public SequentialFilePictureCaptureHandler(String pattern) {
+        this(pattern, 1);
     }
 
     /**
      * Create a picture capture handler.
      *
-     * @param file file to save the picture to
+     * @param pattern format pattern for the filenames, containing a "%d" formatter somewhere to take the file number
+     * @param initial initial file number
      */
-    public FilePictureCaptureHandler(File file) {
-        this.file = file;
-    }
-
-    /**
-     * Create a picture capture handler.
-     *
-     * @param file name of the file to save the picture to
-     */
-    public FilePictureCaptureHandler(String file) {
-        this(new File(file));
+    public SequentialFilePictureCaptureHandler(String pattern, int initial) {
+        this.pattern = pattern;
+        this.number = initial;
     }
 
     @Override
     public void begin() throws Exception {
-        out = new BufferedOutputStream(new FileOutputStream(file));
+        file = new File(String.format(pattern, number++));
+        out = new BufferedOutputStream(new FileOutputStream(file), BUFFER_SIZE);
     }
 
     @Override

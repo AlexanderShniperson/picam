@@ -17,31 +17,31 @@
  * Copyright 2016-2019 Caprica Software Limited.
  */
 
-package uk.co.caprica.picam.enums;
+package uk.co.caprica.picam;
 
-public enum Encoding {
+/**
+ * Implementation of a picture capture handler that does nothing.
+ * <p>
+ * This is used only for testing the camera.
+ */
+public class NopPictureCaptureHandler implements PictureCaptureHandler {
 
-    BMP("BMP "),
-    GIF("GIF "),
-    I420("I420"),
-    JPEG("JPEG"),
-    PNG("PNG "),
-    RGB24("RGB3"),
-    BGR24("BGR3"),
-
-    OPAQUE("OPQV");
-
-    private final int value;
-
-    Encoding(String encoding) {
-        this.value = fourCC(encoding);
+    @Override
+    public void begin() throws Exception {
     }
 
-    public int value() {
-        return value;
+    @Override
+    public int pictureData(byte[] data) throws Exception {
+        return data.length;
     }
 
-    private static int fourCC(String value) {
-        return value.charAt(0) | (value.charAt(1) << 8) | (value.charAt(2) << 16) | (value.charAt(3) << 24);
+    @Override
+    public void end() throws Exception {
     }
+
+    @Override
+    public Object result() {
+        return null;
+    }
+
 }

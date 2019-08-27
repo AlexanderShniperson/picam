@@ -17,31 +17,15 @@
  * Copyright 2016-2019 Caprica Software Limited.
  */
 
-package uk.co.caprica.picam.enums;
+package uk.co.caprica.picam;
 
-public enum Encoding {
+/**
+ * Exception thrown for a general camera failure.
+ */
+public final class CameraException extends Exception {
 
-    BMP("BMP "),
-    GIF("GIF "),
-    I420("I420"),
-    JPEG("JPEG"),
-    PNG("PNG "),
-    RGB24("RGB3"),
-    BGR24("BGR3"),
-
-    OPAQUE("OPQV");
-
-    private final int value;
-
-    Encoding(String encoding) {
-        this.value = fourCC(encoding);
+    public CameraException(String message) {
+        super(message);
     }
 
-    public int value() {
-        return value;
-    }
-
-    private static int fourCC(String value) {
-        return value.charAt(0) | (value.charAt(1) << 8) | (value.charAt(2) << 16) | (value.charAt(3) << 24);
-    }
 }
